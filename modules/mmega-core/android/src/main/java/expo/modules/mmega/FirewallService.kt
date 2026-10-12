@@ -81,6 +81,7 @@ class FirewallService : VpnService() {
   private var lastEventQuery = 0L
   private var watchingForeground = false
   private var callback: ConnectivityManager.NetworkCallback? = null
+  @Volatile private var promoted = false
 
   private val screenReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -152,7 +153,10 @@ class FirewallService : VpnService() {
       else -> handler.post {
         lastKey = ""
         rebuild()
-        if (fg) demote()
+        // Only drop the foreground state once the VPN is up (the system then keeps the service
+        // bound). Otherwise a background-started service would be killed by Android after ~1 min
+        // and could no longer react to network changes.
+        if (promoted && pfd != null) demote()
       }
     }
     return START_STICKY
@@ -169,10 +173,11 @@ class FirewallService : VpnService() {
       val n = NotificationCompat.Builder(this, "mmega_firewall")
         .setSmallIcon(R.drawable.mmega_notif)
         .setContentTitle("Pare-feu MMega")
-        .setContentText("Activation du pare-feu…")
+        .setContentText("Pare-feu en veille : il s’active dès qu’une règle s’applique à ce réseau")
         .setSilent(true)
         .build()
       ServiceCompat.startForeground(this, FG_ID, n, if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0)
+      promoted = true
     } catch (_: Throwable) {
     }
   }
@@ -180,6 +185,7 @@ class FirewallService : VpnService() {
   private fun demote() {
     // Once the VPN interface is up the system keeps the service bound; no notification needed.
     try { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) } catch (_: Throwable) {}
+    promoted = false
   }
 
   override fun onRevoke() {
@@ -336,6 +342,7 @@ class FirewallService : VpnService() {
       Store.prefs(this).edit().putBoolean("fw_revoked", false).apply()
       val blockedCount = if (blockAll) -1 else added
       publish(if (next != null) mode else "off", blockedCount)
+      if (next != null && promoted) demote()
     } catch (_: Throwable) {
       close()
       publish("off", 0)

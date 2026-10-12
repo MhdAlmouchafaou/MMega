@@ -41,6 +41,8 @@ function Bootstrap({ onReady }: { onReady: () => void }) {
     refreshAll();
     useData.getState().loadApps();
     startLive();
+    // startLive/stopLive are ref-counted: keep this owner's calls paired even if 'active' repeats.
+    let live = true;
     onReady();
     SplashScreen.hideAsync().catch(() => {});
 
@@ -49,10 +51,16 @@ function Bootstrap({ onReady }: { onReady: () => void }) {
       if (s === 'active') {
         pullNativeState();
         refreshAll();
-        startLive();
+        if (!live) {
+          startLive();
+          live = true;
+        }
         if (!timer) timer = setInterval(() => useData.getState().refreshOverview(), 30_000);
       } else if (s === 'background') {
-        stopLive();
+        if (live) {
+          stopLive();
+          live = false;
+        }
         if (timer) clearInterval(timer);
         timer = null;
       }
@@ -60,7 +68,7 @@ function Bootstrap({ onReady }: { onReady: () => void }) {
     return () => {
       detach();
       sub.remove();
-      stopLive();
+      if (live) stopLive();
       if (timer) clearInterval(timer);
     };
   }, [hydrated, onReady]);

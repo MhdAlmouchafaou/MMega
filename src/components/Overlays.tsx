@@ -170,7 +170,12 @@ function ConfirmDialog() {
   const hide = useUI((s) => s.hideConfirm);
   if (!confirm) return null;
   return (
-    <DialogFrame onClose={hide}>
+    <DialogFrame
+      onClose={() => {
+        hide();
+        confirm.onCancel?.();
+      }}
+    >
       <Text style={[styles.dialogTitle, { color: t.text }]}>{confirm.title}</Text>
       {confirm.message ? <Text style={[styles.dialogMessage, { color: t.textSecondary }]}>{confirm.message}</Text> : null}
       <DialogButtons

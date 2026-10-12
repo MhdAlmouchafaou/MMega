@@ -159,13 +159,9 @@ function LiveCard() {
   );
 }
 
-function TodayTiles() {
+function Tile({ icon, label, value, color, soft, rx, tx, max }: { icon: IconName; label: string; value: number; color: string; soft: string; rx: number; tx: number; max: number }) {
   const t = useTheme();
-  const today = useData((s) => s.today);
-  const mobile = today?.mobile ?? 0;
-  const wifi = today?.wifi ?? 0;
-  const max = Math.max(mobile, wifi, 1);
-  const Tile = ({ icon, label, value, color, soft, rx, tx }: { icon: IconName; label: string; value: number; color: string; soft: string; rx: number; tx: number }) => (
+  return (
     <View style={[styles.tile, { backgroundColor: t.surface }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <IconBadge name={icon} color={color} bg={soft} size={34} />
@@ -182,10 +178,18 @@ function TodayTiles() {
       </Text>
     </View>
   );
+}
+
+function TodayTiles() {
+  const t = useTheme();
+  const today = useData((s) => s.today);
+  const mobile = today?.mobile ?? 0;
+  const wifi = today?.wifi ?? 0;
+  const max = Math.max(mobile, wifi, 1);
   return (
     <Animated.View entering={FadeInDown.delay(140).duration(380)} style={styles.tiles}>
-      <Tile icon="signal" label="Mobile" value={mobile} color={t.mobile} soft={t.mobileSoft} rx={today?.mobileRx ?? 0} tx={today?.mobileTx ?? 0} />
-      <Tile icon="wifi" label="Wi‑Fi" value={wifi} color={t.wifi} soft={t.wifiSoft} rx={today?.wifiRx ?? 0} tx={today?.wifiTx ?? 0} />
+      <Tile icon="signal" label="Mobile" value={mobile} color={t.mobile} soft={t.mobileSoft} rx={today?.mobileRx ?? 0} tx={today?.mobileTx ?? 0} max={max} />
+      <Tile icon="wifi" label="Wi‑Fi" value={wifi} color={t.wifi} soft={t.wifiSoft} rx={today?.wifiRx ?? 0} tx={today?.wifiTx ?? 0} max={max} />
     </Animated.View>
   );
 }
@@ -373,6 +377,7 @@ function InsightCard({ item, index }: { item: Insight; index: number }) {
 }
 
 function Insights() {
+  const t = useTheme();
   const plan = useData((s) => s.plan);
   const week = useData((s) => s.periods.week);
   const net = useData((s) => s.net);
@@ -391,7 +396,7 @@ function Insights() {
   if (!items.length) return null;
   return (
     <View>
-      <Text style={[styles.section, { color: useTheme().tabInactive }]}>Conseils intelligents</Text>
+      <Text style={[styles.section, { color: t.tabInactive }]}>Conseils intelligents</Text>
       {items.map((it, i) => (
         <InsightCard key={it.id} item={it} index={i} />
       ))}

@@ -145,6 +145,17 @@ export function DiagnosticTab() {
 
   const run = async () => {
     if (!Native || running) return;
+    try {
+      await runSteps();
+    } catch {
+      setVerdict({ tone: 'fail', title: 'Le diagnostic a été interrompu', advice: ['Réessayez dans quelques secondes.'] });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const runSteps = async () => {
+    if (!Native || running) return;
     setRunning(true);
     setVerdict(null);
     setSteps(INITIAL);

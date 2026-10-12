@@ -173,6 +173,11 @@ class MonitorService : Service() {
 
   private fun refreshUsage() {
     vpnReady = try { VpnService.prepare(this) == null } catch (_: Throwable) { false }
+    // Restart the firewall if Android stopped it while it was idle (no VPN interface up).
+    // Never fight the user: after a revoke (VPN turned off in Android settings) wait for the app.
+    if (vpnReady && !FirewallService.running && !Store.prefs(this).getBoolean("fw_revoked", false) && FirewallService.wanted(this)) {
+      FirewallService.apply(this)
+    }
     if (!Usage.hasAccess(this)) return
     val start = Usage.dayStart()
     val now = System.currentTimeMillis()

@@ -46,6 +46,7 @@ function AppsSection() {
 function TestSection() {
   const tab = useNav((s) => s.testTab);
   const autoStart = useNav((s) => s.autoStart);
+  const visible = useNav((s) => s.section === 'test');
   const [page, setPage] = useState(tab);
   return (
     <SectionPager
@@ -56,7 +57,7 @@ function TestSection() {
         setPage(i);
         useNav.setState({ testTab: i });
       }}
-      pages={[<SpeedTab key="s" />, <DiagnosticTab key="d" />, <NetworkTab key="n" active={page === 2} />, <HistoryTab key="h" />]}
+      pages={[<SpeedTab key="s" />, <DiagnosticTab key="d" />, <NetworkTab key="n" active={visible && page === 2} />, <HistoryTab key="h" />]}
     />
   );
 }
